@@ -1,0 +1,94 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://primefaces.org/ui ">
+
+<h:head>
+    <h3>
+        <p:outputLabel value=" LOG IN"/>
+    </h3>
+</h:head>
+<body>
+<h:form>
+    <p:outputLabel for="grid" value="#{accountAdminManagedBean.message}"/>
+    <h:panelGrid id="grid" columns="3" cellpadding="2" cellspacing="2">
+        <p:outputLabel for="usert" value="Username"/>
+        <p:inputText id="usert" value="#{accountAdminManagedBean.user}"
+                     required="true">
+            <p:ajax event="keyup"/>
+        </p:inputText>
+        <p:message for="usert" display="tooltip"/>
+
+        <p:outputLabel for="passt" value="Password"/>
+        <p:password id="passt"
+                    value="#{accountAdminManagedBean.pass}"
+                    required="true">
+            <p:ajax event="keyup"/>
+        </p:password>
+        <p:message for="passt" display="tooltip"/>
+
+        <h:outputText value=""/>
+        <p:panelGrid>
+            <p:commandButton value="Login"
+                             process="@this"
+                             update="grid"
+                             action="#{accountAdminManagedBean.login()}"/>
+            <p:commandButton value="Create"
+                             process="@this"
+                             action="#{accountAdminManagedBean.openDialogCreateUser()}"/>
+        </p:panelGrid>
+    </h:panelGrid>
+</h:form>
+
+<p:dialog
+        widgetVar="newUser"
+        closable="false"
+        header="Добавить нового пользователя">
+    <h:form>
+        <h:panelGrid columns="2" cellpadding="2" cellspacing="2">
+            <p:outputLabel for="newname"
+                           value="Введите имя :"/>
+            <p:inputText value="#{accountAdminManagedBean.createAccount.username}"
+                         id="newname"
+                         required="true"
+                         maxlength="20">
+                <p:ajax event="keyup"/>
+            </p:inputText>
+
+            <p:outputLabel for="newpass"
+                           value="Введите пароль :"/>
+            <p:password value="#{accountAdminManagedBean.createAccount.password}"
+                        id="newpass"
+                        required="true"
+                        maxlength="20">
+                <p:ajax event="keyup"/>
+            </p:password>
+
+            <p:outputLabel for="newbirthdate" value="Дата рождения :"/>
+            <p:datePicker id="newbirthdate" value="#{accountAdminManagedBean.createAccount.birthdate}"
+                          pattern="dd.MM.yyyy"
+                          readonlyInput="true"
+                          monthNavigator="true"
+                          yearNavigator="true"
+                          yearRange="1900:2020"
+                          required="true"
+                          showWeek="true">
+                <p:ajax event="dateSelect"/>
+            </p:datePicker>
+        </h:panelGrid>
+        <h:panelGrid columns="2" cellpadding="2" cellspacing="2">
+            <p:commandButton value="Создать"
+                             process="@this"
+                             action="#{accountAdminManagedBean.createNewAccount()}"/>
+            <p:commandButton value="Отмена"
+                             process="@this"
+                             action="#{accountAdminManagedBean.closeDialogCreateUser}"/>
+        </h:panelGrid>
+    </h:form>
+</p:dialog>
+</body>
+</html>

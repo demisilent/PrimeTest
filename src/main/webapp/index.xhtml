@@ -1,0 +1,403 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:c="http://java.sun.com/jsp/jstl/core">
+
+<h:head>
+    <title>Phonebook</title>
+    <f:event type="preRenderComponent" listener="#{accountAdminManagedBean.verifyLogin()}"/>
+    <link rel="stylesheet" href="CSS/primeicons.css"/>
+</h:head>
+<h:body>
+    <h:form id="formTable">
+        <p:panel style="bottom: 15px">
+            <h2><p:outputLabel value="phonebook"/></h2><br/>
+            <p:outputLabel value="#{accountAdminManagedBean.user} "/>
+            <p:commandLink action="#{accountAdminManagedBean.logout()}" value=" Logout"/>
+        </p:panel>
+        <h:panelGrid columns="2" cellpadding="2" cellspacing="2" columnClasses="ui-grid-col-7,ui-grid-col-5">
+            <p:panel>
+                <h:panelGrid columns="5" id="button_panel" cellpadding="2" cellspacing="2">
+                    <p:commandButton value="Добавить"
+                                     process="@this"
+                                     action="#{main.openDialog('new')}"/>
+                    <p:commandButton widgetVar="editb"
+                                     id="edit_button"
+                                     value="Редактировать"
+                                     process="@this"
+                                     disabled="#{main.disabledButtons}"
+                                     action="#{main.openDialog('edit')}"/>
+                    <p:commandButton widgetVar="deleteb"
+                                     disabled="#{main.disabledButtons}"
+                                     id="delete_button"
+                                     value="Удалить"
+                                     process="@this"
+                                     action="#{main.openDialog('delete')}"/>
+                    <p:inputText value="#{filter.filteringValue}" style="width:200px"
+                                 placeholder="Поиск">
+                        <p:ajax event="keyup" process="@this"
+                                update="formTable:datatable:globalFilter"
+                                listener="#{filter.onChangeFilteringTable('datatable')}"/>
+                    </p:inputText>
+                    <p:commandButton value="Экспорт в CSV"
+                                     onstart="#{exportBean.getListForCsv(main.persons)}"
+                                     ajax="false"
+                                     onclick="PrimeFaces.monitorDownload(start, stop);"
+                                     icon="pi pi-arrow-down" styleClass="p-mr-2">
+                        <p:fileDownload value="#{exportBean.downloadFile(main.persons)}"/>
+                    </p:commandButton>
+                </h:panelGrid>
+                <p:dataTable id="datatable"
+                             widgetVar="datatable"
+                             var="person"
+                             value="#{main.persons}"
+                             selection="#{main.selectedPerson}"
+                             selectionMode="single"
+                             rowKey="#{person.id}"
+                             selectionPageOnly="false"
+                             filteredValue="#{filter.filteringPerson}"
+                             globalFilterFunction="#{filter.globalFilterFunctionForPersons}">
+                    <p:ajax event="rowSelect" listener="#{main.enableButtons('false')}"
+                            update="formTable:button_panel,
+                            formTable:datatable1,
+                            formTable:visiblePanel,
+                            editForm:editPanel"/>
+                    <p:ajax event="rowSelect" listener="#{filter.ClearFilter('datatable1')}"
+                            update="
+                            formTable:button_panel,
+                            formTable:datatable1,
+                            formTable:visiblePanel,
+                            editForm:editPanel,
+                            formTable:button_panel1"/>
+                    <p:ajax event="rowUnselect" listener="#{main.enableButtons('true')}"
+                            update="formTable:button_panel, editForm:editPanel, formTable:datatable1, formTable:visiblePanel, "/>
+                    <f:facet name="header">
+                        <div>
+                            <h:inputHidden value="#{filter.filteringValue}" id="globalFilter"/>
+                        </div>
+                    </f:facet>
+                    <p:column field="surname" headerText="Фамилия">
+                        <h:outputText value="#{person.surname}"/>
+                    </p:column>
+                    <p:column field="name" headerText="Имя">
+                        <h:outputText value="#{person.name}"/>
+                    </p:column>
+                    <p:column field="sName" headerText="Отчество">
+                        <h:outputText value="#{person.secondName}"/>
+                    </p:column>
+                    <p:column field="adress" headerText="Адрес">
+                        <h:outputText value="#{person.adress}"/>
+                    </p:column>
+                    <p:column visible="#{main.userAccount.username.equals('admin')}" field="creator"
+                              headerText="Владелец">
+                        <h:outputText value="#{person.creator}"/>
+                    </p:column>
+                </p:dataTable>
+            </p:panel>
+            <p:panel id="visiblePanel" visible="#{not main.disabledButtons}">
+                <h:panelGrid columns="4" id="button_panel1" cellpadding="2" cellspacing="2">
+                    <p:commandButton icon="ui-icon-plus"
+                                     process="@this"
+                                     action="#{main.openDialog('new_c')}"/>
+                    <p:commandButton widgetVar="editb"
+                                     id="edit_button1"
+                                     icon="ui-icon-pencil"
+                                     process="@this"
+                                     disabled="#{main.disabledButtonsContact}"
+                                     action="#{main.openDialog('edit_c')}"/>
+                    <p:commandButton widgetVar="deleteb"
+                                     disabled="#{main.disabledButtonsContact}"
+                                     id="delete_button1"
+                                     icon="ui-icon-trash"
+                                     process="@this"
+                                     action="#{main.openDialog('delete_c')}"/>
+                    <p:inputText value="#{filter.filteringContactValue}" style="width: 120px"
+                                 placeholder="Поиск">
+                        <p:ajax event="keyup" process="@this"
+                                update="formTable:datatable1:contactValue"
+                                listener="#{filter.onChangeFilteringTable('datatable1')}"/>
+                    </p:inputText>
+                </h:panelGrid>
+
+                <p:dataTable id="datatable1"
+                             widgetVar="datatable1"
+                             value="#{main.selectedPerson.contacts}"
+                             var="contact"
+                             selection="#{main.selectedContact}"
+                             selectionMode="single"
+                             rowKey="#{contact.id}"
+                             selectionPageOnly="false"
+                             filteredValue="#{filter.filteringContact}"
+                             style="vertical-align: top; align-content: center">
+                    <p:ajax event="rowSelect" update="formTable:button_panel1, editForm1:editPanelContact"
+                            listener="#{main.enableButtonsContact('false')}"/>
+                    <p:ajax event="rowUnselect" update="formTable:button_panel1"
+                            listener="#{main.enableButtonsContact('true')}"/>
+                    <f:facet name="header">
+                        <div></div>
+                    </f:facet>
+                    <p:column headerText="Контакт">
+                        <h:outputText value="#{contact.communication}"/>
+                    </p:column>
+                    <p:column headerText="Данные" filterMatchMode="contains" filterBy="#{contact.value}">
+                        <h:outputText value="#{contact.value}"/>
+                        <f:facet name="filter">
+                            <h:inputHidden id="contactValue" value="#{filter.filteringContactValue}"/>
+                        </f:facet>
+                    </p:column>
+                    <p:column headerText="">
+                        <p:panel style="padding: 0px!important; border: 0px!important;"
+                                 visible="#{contact.communication.equals('phone')}">
+                            <p:commandButton icon="pi pi-phone" value="Call" onclick="PF('plug').show()"/>
+                        </p:panel>
+                        <p:panel style="padding: 0px!important; border: 0px!important;"
+                                 visible="#{contact.communication.equals('phone')}">
+                            <p:commandButton icon="pi pi-comments" value="SMS" onclick="PF('plug').show()"/>
+                        </p:panel>
+                        <p:panel style="padding: 0px!important; border: 0px!important;"
+                                 visible="#{contact.communication.equals('email')}">
+                            <p:commandButton icon="pi pi--mail-closed" value="Mail" onclick="PF('plug').show()"/>
+                        </p:panel>
+                        <p:panel style="padding: 0px!important; border: 0px!important;"
+                                 visible="#{contact.communication.equals('skype')}">
+                            <p:commandButton icon="pi pi-phone" value="Skype" onclick="PF('plug').show()"/>
+                        </p:panel>
+                    </p:column>
+                </p:dataTable>
+            </p:panel>
+        </h:panelGrid>
+    </h:form>
+
+    <!--     Диалоговые окна       -->
+
+    <!--  Создание нового абонента -->
+    <p:dialog widgetVar="new"
+              closable="false"
+              modal="true"
+              width="400"
+              header="Добавить новый контакт">
+        <h:form>
+            <p:panel>
+                <h:panelGrid columns="2" cellpadding="2" cellspacing="2">
+                    <p:outputLabel value="Фамилия :"/>
+                    <p:inputText required="true" maxlength="20" value="#{main.surname}">
+                        <p:ajax event="keyup"/>
+                    </p:inputText>
+
+                    <p:outputLabel value="Имя :"/>
+                    <p:inputText required="true" maxlength="20" value="#{main.name}">
+                        <p:ajax event="keyup"/>
+                    </p:inputText>
+
+                    <p:outputLabel value="Отчество :"/>
+                    <p:inputText required="true" maxlength="20" value="#{main.secondName}">
+                        <p:ajax event="keyup"/>
+                    </p:inputText>
+
+                    <p:outputLabel value="Адрес :"/>
+                    <p:inputTextarea maxlength="100" rows="5" value="#{main.adress}">
+                        <p:ajax event="keyup"/>
+                    </p:inputTextarea>
+
+                </h:panelGrid>
+                <h:panelGrid columns="2" cellpadding="2" cellspacing="2">
+                    <p:commandButton value="Добавить"
+                                     process="@this"
+                                     action="#{main.EditContactList('new')}"
+                                     update="formTable:datatable"/>
+                    <p:commandButton value="Отмена"
+                                     process="@this"
+                                     action="#{main.closeDialog('new')}"/>
+                </h:panelGrid>
+            </p:panel>
+        </h:form>
+    </p:dialog>
+
+    <!--  Редактирование абонента  -->
+    <p:dialog widgetVar="edit"
+              closable="false"
+              modal="true"
+              width="400"
+              header="Изменить контакт">
+        <h:form id="editForm">
+            <p:panel>
+                <h:panelGrid id="editPanel" columns="2" cellpadding="2" cellspacing="2">
+                    <p:outputLabel for="editsurname" value="Фамилия :"/>
+                    <p:inputText id="editsurname"
+                                 value="#{main.selectedPerson.surname}">
+                        <p:ajax event="keyup"/>
+                    </p:inputText>
+
+                    <p:outputLabel for="editname" value="Имя :"/>
+                    <p:inputText id="editname"
+                                 value="#{main.selectedPerson.name}">
+                        <p:ajax event="keyup"/>
+                    </p:inputText>
+
+                    <p:outputLabel for="editsname" value="Отчество :"/>
+                    <p:inputText id="editsname"
+                                 value="#{main.selectedPerson.secondName}">
+                        <p:ajax event="keyup"/>
+                    </p:inputText>
+
+                    <p:outputLabel for="editadress" value="Адрес :"/>
+                    <p:inputTextarea id="editadress"
+                                     value="#{main.selectedPerson.adress}"
+                                     rows="5"
+                                     maxlength="100">
+                        <p:ajax event="keyup"/>
+                    </p:inputTextarea>
+
+                    <h:inputHidden value="#{main.selectedPerson.id}"/>
+                </h:panelGrid>
+                <h:panelGrid columns="2" cellpadding="2" cellspacing="2">
+                    <p:commandButton value="Изменить"
+                                     process="@this"
+                                     action="#{main.EditContactList('edit')}"
+                                     update="formTable:datatable"/>
+                    <p:commandButton value="Отмена"
+                                     process="@this"
+                                     action="#{main.closeDialog('edit')}"/>
+                </h:panelGrid>
+            </p:panel>
+        </h:form>
+    </p:dialog>
+
+    <!--     Удаление абонента     -->
+    <p:dialog widgetVar="delete"
+              closable="false"
+              modal="true"
+              header="Удаление записи"
+              width="400">
+        <p:panel>
+            <p:outputLabel
+                    value="Подтвердите удаление контакта из списка : все контакте данного абонента будут удалены!"/>
+        </p:panel>
+        <h:panelGrid columns="2" cellpadding="2" cellspacing="2">
+            <p:commandButton value="Удалить"
+                             process="@this"
+                             action="#{main.EditContactList('delete')}"
+                             update="formTable:datatable, formTable:visiblePanel"/>
+            <p:commandButton value="Отмена"
+                             process="@this"
+                             action="#{main.closeDialog('delete')}"/>
+        </h:panelGrid>
+    </p:dialog>
+
+    <!--     Создание контакта     -->
+    <p:dialog widgetVar="new_c"
+              closable="false"
+              modal="true"
+              header="Создание контакта"
+              width="400">
+        <h:form>
+            <p:panel>
+                <h:panelGrid columns="2" cellpadding="2" cellspacing="2">
+                    <p:outputLabel for="selectedContact" value="Тип контакта :"/>
+                    <p:selectOneMenu id="selectedContact" value="#{main.SOMtypeOFContact}" required="true">
+                        <f:selectItem itemLabel="" itemDisabled="true" noSelectionOption="true"/>
+                        <f:selectItem itemLabel="Телефон" itemValue="phone"/>
+                        <f:selectItem itemLabel="E-Mail" itemValue="email"/>
+                        <f:selectItem itemLabel="Skype" itemValue="skype"/>
+                        <p:ajax event="valueChange"/>
+                    </p:selectOneMenu>
+                    <p:outputLabel for="selectedValue" value="Данные контакта :"/>
+                    <p:inputText id="selectedValue"
+                                 maxlength="20"
+                                 value="#{main.valueOFContact}"
+                                 required="true">
+                        <p:ajax event="keyup"/>
+                    </p:inputText>
+                </h:panelGrid>
+                <h:panelGrid columns="2" cellpadding="2" cellspacing="2">
+                    <p:commandButton value="Добавить"
+                                     process="@this"
+                                     action="#{main.EditContactList('new_c')}"
+                                     update="formTable:datatable1"/>
+                    <p:commandButton value="Отмена"
+                                     process="@this"
+                                     action="#{main.closeDialog('new_c')}"/>
+                </h:panelGrid>
+            </p:panel>
+        </h:form>
+    </p:dialog>
+
+    <!--  Редактирование контакта  -->
+    <p:dialog widgetVar="edit_c"
+              closable="false"
+              modal="true"
+              header="Редактирование контакта"
+              width="400">
+        <h:form id="editForm1">
+            <p:panel>
+                <h:panelGrid id="editPanelContact" columns="2" cellpadding="2" cellspacing="2">
+                    <p:outputLabel for="editSelectedContact" value="Тип контакта :"/>
+                    <p:selectOneMenu id="editSelectedContact" value="#{main.selectedContact.communication}"
+                                     required="true">
+                        <f:selectItem itemLabel="#{main.selectedContact.communication}" itemDisabled="true"
+                                      noSelectionOption="true"/>
+                        <f:selectItem itemLabel="Телефон" itemValue="phone"/>
+                        <f:selectItem itemLabel="E-Mail" itemValue="email"/>
+                        <f:selectItem itemLabel="Skype" itemValue="skype"/>
+                        <p:ajax event="valueChange"/>
+                    </p:selectOneMenu>
+                    <p:outputLabel for="editSelectedValue" value="Данные контакта :"/>
+                    <p:inputText id="editSelectedValue"
+                                 maxlength="20"
+                                 value="#{main.selectedContact.value}"
+                                 required="true">
+                        <p:ajax event="keyup"/>
+                    </p:inputText>
+                </h:panelGrid>
+                <h:panelGrid columns="2" cellpadding="2" cellspacing="2">
+                    <p:commandButton value="Изменить"
+                                     process="@this"
+                                     action="#{main.EditContactList('edit_c')}"
+                                     update="formTable:datatable1"/>
+                    <p:commandButton value="Отмена"
+                                     process="@this"
+                                     action="#{main.closeDialog('edit_c')}"/>
+                </h:panelGrid>
+            </p:panel>
+        </h:form>
+    </p:dialog>
+
+    <!--     Удаление контакта     -->
+    <p:dialog widgetVar="delete_c"
+              closable="false"
+              modal="true"
+              header="Удаление контакта"
+              width="400">
+        <p:panel>
+            <p:outputLabel value="Подтвердите удаление"/>
+            <h:panelGrid columns="2" cellpadding="2" cellspacing="2">
+                <p:commandButton value="Удалить"
+                                 process="@this"
+                                 action="#{main.EditContactList('delete_c')}"
+                                 update="formTable:datatable1, formTable:button_panel1"/>
+                <p:commandButton value="Отмена"
+                                 process="@this"
+                                 action="#{main.closeDialog('delete_c')}"/>
+            </h:panelGrid>
+        </p:panel>
+    </p:dialog>
+
+    <!--       Окно-заглушка       -->
+    <p:dialog widgetVar="plug"
+              closable="false"
+              modal="true"
+              header="Окно заглушка"
+              width="400">
+        <h:panelGrid columns="2" cellpadding="3" cellspacing="3">
+            <p:outputLabel value="Это окно можно закрыть"/>
+            <p:commandButton value="закрыть" onclick="PF('plug').hide()"/>
+        </h:panelGrid>
+    </p:dialog>
+
+</h:body>
+</html>
+
